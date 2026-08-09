@@ -67,7 +67,10 @@ ADD $labdir/$lab.tar.gz $HOME
 #
 USER root
 COPY clean.sh /home/ubuntu/clean.sh
+COPY zap-custom-home.sh /home/ubuntu/zap-custom-home.sh
 RUN chmod 777 /home/ubuntu/clean.sh
+RUN chmod 777 /home/ubuntu/zap-custom-home.sh
+RUN cp /home/ubuntu/zap-custom-home.sh /usr/share/owasp-zap/zap.sh
 CMD ["/home/ubuntu/clean.sh"]
 
 
