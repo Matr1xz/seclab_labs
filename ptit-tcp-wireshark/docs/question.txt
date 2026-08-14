@@ -1,0 +1,43 @@
+QUESTION 1
+TCP handshake gồm mấy bước?
+A. 2
+B. 3
+C. 4
+D. 5
+
+QUESTION 2
+Cờ (flag) SYN trong TCP có chức năng gì?
+A. Yêu cầu đóng kết nối
+B. Khởi tạo kết nối
+C. Gửi lại gói bị mất
+D. Đặt lại kết nối
+
+QUESTION 3
+Trong Wireshark, filter nào dùng để chỉ hiển thị gói tin TCP?
+A. tcp.port
+B. tcp
+C. tcp.flag
+D. port.tcp
+
+QUESTION 4
+Sequence number trong TCP dùng để:
+A. Xác định thứ tự gói tin trong luồng dữ liệu
+B. Xác định địa chỉ IP nguồn
+C. Lọc gói tin theo cổng
+D. Xác định kích thước cửa sổ TCP
+
+QUESTION 5
+Cờ FIN trong TCP báo hiệu:
+A. Bắt đầu truyền dữ liệu
+B. Kết thúc kết nối một chiều
+C. Tạm dừng kết nối
+D. Thiết lập lại kết nối
+
+QUESTION 6
+Trong quá trình bắt tay 3 bước, gói tin thứ 2 sẽ có các flag:
+A. SYN
+B. ACK
+C. SYN, ACK
+D. FIN, ACK
+
+

@@ -1,0 +1,150 @@
+ARG registry
+FROM $registry/labtainer.network2
+FROM $registry/labtainer.network.ssh2
+
+ARG lab
+ARG labdir
+ARG imagedir
+ARG user_name
+ARG password
+ARG apt_source
+ARG version
+
+LABEL version=$version
+ENV APT_SOURCE $apt_source
+RUN /usr/bin/apt-source.sh
+
+# Cài đặt các gói cần thiết
+RUN apt-get update && apt-get install -y \
+    rsyslog \
+    sqlite3 \
+    firefox \
+    apache2 \
+    php \
+    libapache2-mod-php \
+    php-sqlite3 \
+    curl
+
+# Tạo trang web giả lập
+RUN mkdir -p /var/www/html && \
+    echo "<?php \
+session_start(); \
+if (\$_SERVER['REQUEST_METHOD'] === 'POST') { \
+    ini_set('display_errors', 1); \
+    error_reporting(E_ALL); \
+    \$username = \$_POST['username']; \
+    \$password = \$_POST['password']; \
+    \$db = new SQLite3('/home/ubuntu/.mozilla/firefox/test-profile/logins.db'); \
+    \$stmt = \$db->prepare('SELECT * FROM logins WHERE username = :username'); \
+    \$stmt->bindValue(':username', \$username, SQLITE3_TEXT); \
+    \$result = \$stmt->execute(); \
+    \$row = \$result->fetchArray(SQLITE3_ASSOC); \
+    if (\$row) { \
+        if (base64_decode(\$row['password']) === \$password) { \
+            \$_SESSION['user_id'] = \$row['id']; \
+            echo \"<p style='color: green;'>Dang nhap thanh cong</p>\"; \
+            header('Location: user.php?id=' . \$row['id']); \
+            exit; \
+        } else { \
+            echo \"<p style='color: red;'>Sai mat khau</p>\"; \
+        } \
+    } else { \
+        \$stmt = \$db->prepare('SELECT * FROM logins WHERE password = :password'); \
+        \$stmt->bindValue(':password', base64_encode(\$password), SQLITE3_TEXT); \
+        \$result = \$stmt->execute(); \
+        if (\$result->fetchArray(SQLITE3_ASSOC)) { \
+            echo \"<p style='color: red;'>Tai khoan Sai</p>\"; \
+        } else { \
+            echo \"<p style='color: red;'>Dang nhap that bai</p>\"; \
+        } \
+    } \
+} else { \
+    echo '<form method=\"POST\"> \
+            Username: <input type=\"text\" name=\"username\"><br> \
+            Password: <input type=\"password\" name=\"password\"><br> \
+            <button type=\"submit\">Login</button> \
+          </form>'; \
+} ?>" > /var/www/html/login.php
+
+# Tạo file user.php với yêu cầu đăng nhập
+RUN echo "<?php \
+session_start(); \
+if (!isset(\$_SESSION['user_id'])) { \
+    header('Location: login.php'); \
+    exit; \
+} \
+if (!isset(\$_GET['id'])) { \
+    echo 'User ID is missing!'; \
+    exit; \
+} \
+\$user_id = \$_GET['id']; \
+\$db = new SQLite3('/home/ubuntu/.mozilla/firefox/test-profile/logins.db'); \
+\$stmt = \$db->prepare('SELECT * FROM logins WHERE id = :id'); \
+\$stmt->bindValue(':id', \$user_id, SQLITE3_INTEGER); \
+\$result = \$stmt->execute(); \
+\$user = \$result->fetchArray(SQLITE3_ASSOC); \
+if (\$user) { \
+    echo '<h1>User Information</h1>'; \
+    echo '<p><strong>Username:</strong> ' . htmlspecialchars(\$user['username']) . '</p>'; \
+    echo '<p><strong>Password (decoded):</strong> ' . base64_decode(\$user['password']) . '</p>'; \
+} else { \
+    echo 'User not found!'; \
+} \
+?>" > /var/www/html/user.php
+
+# Đảm bảo Apache chạy khi khởi động container
+RUN chmod -R 755 /var/www/html && \
+    chown -R www-data:www-data /var/www/html
+
+# Cấu hình rsyslog để ghi log SSH
+RUN sed -i '/imklog/s/^/#/' /etc/rsyslog.conf && \
+    echo "auth,authpriv.* /var/log/ssh.log" >> /etc/rsyslog.d/50-default.conf
+
+# Cấu hình SSH ghi log chi tiết
+RUN sed -i 's/#LogLevel INFO/LogLevel VERBOSE/' /etc/ssh/sshd_config && \
+    echo "LogLevel VERBOSE" >> /etc/ssh/sshd_config
+
+# Tạo người dùng và đặt mật khẩu
+RUN useradd -ms /bin/bash $user_name && \
+    echo "$user_name:$password" | chpasswd && \
+    adduser $user_name sudo
+
+# Cấu hình Firefox profile và tạo SQLite database
+RUN mkdir -p /home/$user_name/.mozilla/firefox/test-profile && \
+    echo "[Profile0]" > /home/$user_name/.mozilla/firefox/profiles.ini && \
+    echo "Name=default" >> /home/$user_name/.mozilla/firefox/profiles.ini && \
+    echo "IsRelative=1" >> /home/$user_name/.mozilla/firefox/profiles.ini && \
+    echo "Path=test-profile" >> /home/$user_name/.mozilla/firefox/profiles.ini
+
+RUN sqlite3 /home/$user_name/.mozilla/firefox/test-profile/logins.db \
+    "CREATE TABLE logins (id INTEGER PRIMARY KEY, origin_url TEXT, username TEXT, password TEXT); \
+    INSERT INTO logins (origin_url, username, password) VALUES \
+    ('http://example1.com', 'admin1', 'c2luaHZpZW4xMjM='), \
+    ('http://example2.com', 'admin2', 'cHRpdDEyMw=='), \
+    ('http://example3.com', 'user1', 'YW50b2FuMTIz'), \
+    ('http://example4.com', 'user2', 'c29jMTIz'), \
+    ('http://example5.com', 'testuser', 'dGVzdDEyMw==');"
+
+RUN chown -R $user_name:$user_name /home/$user_name/.mozilla && \
+    chmod -R 755 /home/$user_name/.mozilla
+
+# Tạo thư mục log và khởi tạo tệp log
+RUN mkdir -p /var/log && \
+    touch /var/log/ssh.log && \
+    chown syslog:adm /var/log/ssh.log
+
+# Chuyển sang user
+USER $user_name
+ENV HOME /home/$user_name
+
+# Cài đặt các tệp trong thư mục home
+ADD $labdir/$imagedir/home_tar/home.tar $HOME
+RUN rm -f $HOME/home.tar
+ADD $labdir/$lab.tar.gz $HOME
+
+# Chuyển lại quyền root để khởi động các dịch vụ
+USER root
+
+# Thiết lập CMD để chạy tất cả các dịch vụ cần thiết khi container khởi động
+CMD service apache2 start && service rsyslog start && service ssh start && tail -f /var/log/ssh.log
+

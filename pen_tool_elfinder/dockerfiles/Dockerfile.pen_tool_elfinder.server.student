@@ -1,0 +1,64 @@
+#
+# Labtainer Dockerfile
+#
+#  This is the default Labtainer Dockerfile template, please choose the appropriate
+#  base image below.
+#
+ARG registry
+FROM $registry/labtainer.base2
+#FROM $registry/labtainer.network
+#FROM $registry/labtainer.centos
+#FROM $registry/labtainer.lamp
+#
+ARG lab
+ARG labdir
+ARG imagedir
+ARG user_name
+ARG password
+ARG apt_source
+ARG version
+LABEL version=$version
+ENV APT_SOURCE $apt_source
+RUN /usr/bin/apt-source.sh
+#
+# Install the system files found in the _system directory
+#
+ADD $labdir/$imagedir/sys_tar/sys.tar /
+ADD $labdir/sys_$lab.tar.gz /
+#
+RUN useradd -ms /bin/bash $user_name
+RUN echo "$user_name:$password" | chpasswd
+RUN adduser $user_name sudo
+#
+# Perform all root operations, e.g., "apt-get install" prior to the USER command.
+#
+USER root
+# Install necessary packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends apache2 php php-xml php-mbstring wget curl firefox exiftran && \
+    wget https://www.exploit-db.com/apps/cf0eb4564dbdb9ecfcf4c7ec55e53cee-elFinder-2.1.47.tar.gz -O elFinder-2.1.47.tar.gz && \
+    tar -xvzf elFinder-2.1.47.tar.gz && \
+    mv elFinder-2.1.47 elFinder && \
+    mv elFinder /var/www/html && \
+    chown -R www-data:www-data /var/www/html/* && \
+    chmod -R 777 /var/www/html/* && \
+    mv /var/www/html/elFinder/php/connector.minimal.php-dist /var/www/html/elFinder/php/connector.minimal.php && \
+   echo -e '<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv="refresh" content="0; URL='\''http://localhost/elFinder/elfinder.html'\''" />\n</head>\n<body>\n</body>\n</html>' | sudo tee /var/www/html/index.html > /dev/null
+
+
+
+ENV HOME /home/$user_name
+#
+# Install files in the user home directory
+#
+ADD $labdir/$imagedir/home_tar/home.tar $HOME
+RUN rm -f $HOME/home.tar
+ADD $labdir/$lab.tar.gz $HOME
+#
+# The first thing that executes on the container.
+#
+RUN python3 /home/ubuntu/create_flag.py
+# Start Apache in the foreground
+CMD ["apachectl", "-D", "FOREGROUND"]
+
+

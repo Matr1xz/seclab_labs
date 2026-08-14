@@ -1,0 +1,54 @@
+# ---- Base ----
+ARG registry=labtainers
+FROM ${registry}/labtainer.network.ssh2
+
+# ---- Labtainer args/labels ----
+ARG lab
+ARG labdir
+ARG imagedir
+ARG user_name
+ARG password
+ARG apt_source
+ARG version
+LABEL version="${version}"
+ENV APT_SOURCE="${apt_source}" \
+    DEBIAN_FRONTEND=noninteractive
+
+RUN /usr/bin/apt-source.sh
+
+# ---- OSSEC Agent + Apache ----
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+      wget ca-certificates gnupg gnupg2 gnupg1 \
+      libmysqlclient21 libssl1.1 libgeoip-dev \
+      curl apache2 && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN wget -O /tmp/ossec-hids-agent.deb \
+      https://www2.atomicorp.com/channels/atomic/ubuntu/dists/focal/main/binary-amd64/ossec-hids-agent_3.8.0-35114focal_amd64.deb && \
+    dpkg -i /tmp/ossec-hids-agent.deb || (apt-get update -y && apt-get -y -f install && dpkg -i /tmp/ossec-hids-agent.deb) && \
+    rm -f /tmp/ossec-hids-agent.deb
+
+# Tùy chọn chỉnh rule (không fail nếu file chưa có)
+RUN [ -f /var/ossec/etc/ossec.conf ] && \
+    sed -i 's/<level>7/<level>15/g' /var/ossec/etc/ossec.conf || true
+
+# ---- Labtainer payloads (system) ----
+ADD ${labdir}/${imagedir}/sys_tar/sys.tar /
+ADD ${labdir}/sys_${lab}.tar.gz /
+
+# ---- User ----
+RUN useradd -ms /bin/bash "${user_name}" && \
+    echo "${user_name}:${password}" | chpasswd && \
+    adduser "${user_name}" sudo
+
+# ---- User payloads ----
+USER ${user_name}
+ENV HOME="/home/${user_name}"
+ADD ${labdir}/${imagedir}/home_tar/home.tar ${HOME}
+RUN rm -f ${HOME}/home.tar
+ADD ${labdir}/${lab}.tar.gz ${HOME}
+
+# ---- Entrypoint ----
+USER root
+CMD ["/bin/bash", "-c", "exec /sbin/init --log-target=journal 3>&1"]
+

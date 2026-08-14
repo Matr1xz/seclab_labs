@@ -1,0 +1,36 @@
+1.Sau khi bắt gói trên mạng Wi-Fi, khi mở file capture .pcapng trong Wireshark, bạn sẽ thấy các frame quản lý (management frame) nào xuất hiện?
+ A. Beacon frame
+ B. Probe request / Probe response
+ C. Deauthentication
+ D. Tất cả các loại trên
+
+2.Trong Wireshark, SSID của mạng Wi-Fi bắt được có thể thấy ở đâu?
+ A. Trong field Tagged parameters của Beacon/Probe response
+ B. Trong IP header
+ C. Trong TCP payload
+ D. Không thể xem SSID bằng Wireshark
+
+3. Để kiểm tra kênh (channel) mà AP phát, bạn xem ở đâu trong Wireshark?
+ A. Field Channel frequency hoặc DS Parameter set trong Beacon
+ B. Trường Source MAC trong Data frame
+ C. Trường TTL trong IP header
+ D. Không có cách nào
+
+4.Khi mở file capture, thấy địa chỉ MAC nguồn và đích (Source/Destination) có dạng xx:xx:xx:xx:xx:xx. Điều đó chứng tỏ gì?
+ A. Đang bắt gói ở tầng liên kết dữ liệu (Data Link Layer)
+ B. Đang bắt trực tiếp ở tầng ứng dụng
+ C. Đang phân tích log hệ điều hành
+ D. Đang phân tích email
+
+5.Để lọc riêng các gói Beacon trong file capture, bạn dùng display filter nào trong Wireshark?
+ A. wlan.fc.type_subtype == 0x08
+ B. ip.addr == 192.168.1.1
+ C. tcp.port == 80
+ D. dns
+ 
+6.Trong một file capture, bạn thấy có gói Deauthentication từ MAC của AP đến client. Điều này chứng tỏ:
+ A. Client đang bị ngắt kết nối khỏi AP
+ B. Client đang gửi ARP request
+ C. AP đang gửi DNS reply
+ D. Client đang ping Internet
+ 

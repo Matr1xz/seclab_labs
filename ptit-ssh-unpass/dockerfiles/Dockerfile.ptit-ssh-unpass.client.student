@@ -1,0 +1,34 @@
+ARG registry
+FROM $registry/labtainer.network2
+#FROM $registry/labtainer.network
+#FROM $registry/labtainer.centos
+#FROM $registry/labtainer.lamp
+
+ARG lab
+ARG labdir
+ARG imagedir
+ARG user_name
+ARG password
+ARG apt_source
+ARG version
+LABEL version=$version
+ENV APT_SOURCE $apt_source
+RUN /usr/bin/apt-source.sh
+ADD $labdir/$imagedir/sys_tar/sys.tar /
+ADD $labdir/sys_$lab.tar.gz /
+#
+RUN useradd -ms /bin/bash $user_name
+RUN echo "$user_name:$password" | chpasswd
+RUN adduser $user_name sudo
+
+USER $user_name
+ENV HOME /home/$user_name
+
+ADD $labdir/$imagedir/home_tar/home.tar $HOME
+COPY $labdir/$imagedir/home_tar/nmap.sh $HOME
+RUN rm -f $HOME/home.tar
+ADD $labdir/$lab.tar.gz $HOME
+USER root
+RUN ["bash", "-c", "chmod +x $HOME/nmap.sh"]
+CMD ["/bin/bash", "-c", "exec /sbin/init --log-target=journal 3>&1"]
+

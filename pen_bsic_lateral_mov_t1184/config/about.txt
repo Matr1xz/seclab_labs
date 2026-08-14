@@ -1,0 +1,2 @@
+Use of an SSH agent SSHing to remote computers without entering a passphrase for each access.
+Attack can hijacking SSH session.

@@ -1,0 +1,30 @@
+[v3_vpn_server]
+
+basicConstraints = CA:FALSE
+
+subjectKeyIdentifier = hash
+
+authorityKeyIdentifier = keyid,issuer:always
+
+extendedKeyUsage = <Type>
+
+keyUsage = digitalSignature,keyEncipherment
+
+nsComment= "OpenVPN Server Signed Certificate"
+
+ 
+
+[v3_vpn_client]
+
+basicConstraints = CA:FALSE
+
+subjectKeyIdentifier = hash
+
+authorityKeyIdentifier = keyid,issuer:always
+
+extendedKeyUsage = <Type>
+
+keyUsage = digitalSignature,keyEncipherment
+
+nsComment= "OpenVPN Client Signed Certificate"
+

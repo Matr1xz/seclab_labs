@@ -1,0 +1,11 @@
+root
+admin
+user
+ftp
+anonymous
+steve
+testuser
+user
+user1
+user2
+ubuntu

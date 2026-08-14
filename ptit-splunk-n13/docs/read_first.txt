@@ -1,0 +1,33 @@
+The lab manual is at 
+   file://LAB_DOCS/ptit-splunk-n13.pdf
+
+You may open these by right clicking
+and select "Open Link".
+
+
+☑Cau hinh may log_server
+
+wget -O splunkforwarder-9.1.1-64e843ea36b1-Linux-x86_64.tgz "https://download.splunk.com/products/universalforwarder/releases/9.1.1/linux/splunkforwarder-9.1.1-64e843ea36b1-Linux-x86_64.tgz"
+
+gdown --id 1ifWL-PHg_Q-qC105Gz6sZMUe8sMEQ547
+
+tar xvzf splunkforwarder-9.1.1-64e843ea36b1-Linux-x86_64.tgz -C /opt
+tar -zxvf splunk-add-on-for-unix-and-linux_8100.tgz
+
+cd /opt/splunkforwarder/bin 
+	./splunk start --accept-license
+	./splunk add forward-server 172.10.0.10:9997
+	./splunk enable boot-start
+sudo mv Splunk_TA_nix/ /opt/splunkforwarder/etc/apps/
+cd /opt/splunkforwarder/etc/apps/Splunk_TA_nix/default/
+nano inputs.conf chinh sua file inputs.conf 
+
+cd /opt/splunkforwarder/bin: ./splunk restart
+
+☑Cau hinh may Splunk
+
+wget -O splunk-9.1.1-64e843ea36b1-Linux-x86_64.tgz "https://download.splunk.com/products/splunk/releases/9.1.1/linux/splunk-9.1.1-64e843ea36b1-Linux-x86_64.tgz"
+
+tar -xvzf splunk-9.1.1-64e843ea36b1-Linux-x86_64.tgz -C /opt
+
+cd /opt/splunk/bin: ./splunk start --accept-license

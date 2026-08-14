@@ -1,0 +1,71 @@
+ARG registry 
+FROM $registry/labtainer.network.ssh2
+
+ARG lab
+ARG labdir
+ARG imagedir
+ARG user_name
+ARG apt_source
+
+# Tránh cảnh báo ENV legacy & apt hỏi tương tác
+ENV APT_SOURCE=$apt_source
+ARG DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN /usr/bin/apt-source.sh
+
+# Gói nền tảng cần thiết
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      telnetd snort ca-certificates wget curl unzip \
+  && update-ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+#####################
+# Apache + MySQL + PHP + DVWA (giữ nguyên như bạn, bỏ sudo, và xử lý PHP 7.4/8.1 an toàn)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      apache2 mysql-server php php-mysql openssl git \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN git clone https://github.com/ethicalhack3r/DVWA /var/www/html/dvwa \
+  && chmod -R 777 /var/www/html/dvwa \
+  && mv /var/www/html/dvwa/config/config.inc.php.dist /var/www/html/dvwa/config/config.inc.php
+
+# Bật allow_url_include nếu tồn tại file php.ini (ưu tiên 7.4, nếu không thì 8.1)
+RUN if [ -f /etc/php/7.4/apache2/php.ini ]; then \
+        sed -i 's#^allow_url_include = Off#allow_url_include = On#' /etc/php/7.4/apache2/php.ini ; \
+    elif [ -f /etc/php/8.1/apache2/php.ini ]; then \
+        sed -i 's#^allow_url_include = Off#allow_url_include = On#' /etc/php/8.1/apache2/php.ini ; \
+    fi
+
+RUN apt-get update && apt-get install -y --no-install-recommends libapache2-mod-security2 \
+  && rm -rf /var/lib/apt/lists/*
+
+#####################
+# Cài đặt hashcat và rockyou.txt (có fallback nếu không tải được từ GitHub)
+RUN apt-get update && apt-get install -y --no-install-recommends hashcat \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /usr/share/wordlists \
+  && wget -q https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt \
+       -O /usr/share/wordlists/rockyou.txt \
+  || (echo "Download rockyou.txt failed, installing seclists fallback..." \
+      && apt-get update && apt-get install -y --no-install-recommends seclists \
+      && rm -rf /var/lib/apt/lists/* \
+      && ln -sf /usr/share/seclists/Passwords/Leaked-Databases/rockyou.txt /usr/share/wordlists/rockyou.txt) \
+  && chmod 644 /usr/share/wordlists/rockyou.txt
+
+#####################
+
+ADD $labdir/sys_$lab.tar.gz /
+RUN useradd -ms /bin/bash $user_name \
+  && echo "$user_name:gummybear" | chpasswd \
+  && adduser $user_name sudo
+
+USER $user_name
+ENV HOME=/home/$user_name
+ADD $labdir/$lab.tar.gz $HOME
+USER root
+
+CMD ["/bin/bash", "-c", "exec /sbin/init --log-target=journal 3>&1"]
+

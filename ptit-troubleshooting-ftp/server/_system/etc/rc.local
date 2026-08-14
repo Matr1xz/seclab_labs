@@ -1,0 +1,18 @@
+#!/bin/bash
+sudo useradd -ms /bin/bash jenny
+password=$(cat /etc/passwords-list.txt | shuf -n 1)
+sudo echo "jenny:$password" | chpasswd
+sudo usermod -aG sudo jenny
+
+
+sudo echo "local_root=/var/www/html" >> /etc/vsftpd.conf
+sudo echo "write_enable=YES" >> /etc/vsftpd.conf
+sudo mkdir -p /var/www/html
+sudo chown -R jenny:jenny /var/www/html
+sudo chmod -R 755 /var/www/html
+sudo cp /etc/shell.php /var/www/html
+sudo chown jenny:jenny /var/www/html/shell.php
+sudo echo "AddHandler application/x-httpd-php .php" >> /etc/apache2/apache2.conf
+sudo systemctl restart apache2
+sudo systemctl restart vsftpd
+

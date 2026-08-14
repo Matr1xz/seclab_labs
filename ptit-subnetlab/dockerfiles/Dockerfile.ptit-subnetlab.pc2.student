@@ -1,0 +1,47 @@
+#
+# Labtainer Dockerfile
+#
+ARG registry
+FROM $registry/labtainer.network2
+
+ARG lab
+ARG labdir
+ARG imagedir
+ARG user_name
+ARG password
+ARG apt_source
+ARG version
+LABEL version=$version
+ENV APT_SOURCE $apt_source
+RUN /usr/bin/apt-source.sh
+
+# --- Cài thêm traceroute và tiện ích mạng ---
+USER root
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends traceroute iputils-ping net-tools && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install hệ thống files
+ADD $labdir/$imagedir/sys_tar/sys.tar /
+ADD $labdir/sys_$lab.tar.gz /
+
+# Tạo user
+RUN useradd -ms /bin/bash $user_name
+RUN echo "$user_name:$password" | chpasswd
+RUN adduser $user_name sudo
+# replace above with below for centos/fedora
+#RUN usermod $user_name -a -G wheel
+
+# Chuyển sang user lab
+USER $user_name
+ENV HOME /home/$user_name
+
+# Install files trong home directory
+ADD $labdir/$imagedir/home_tar/home.tar $HOME
+RUN rm -f $HOME/home.tar
+ADD $labdir/$lab.tar.gz $HOME
+
+# Lệnh khởi động container
+USER root
+CMD ["/bin/bash", "-c", "exec /sbin/init --log-target=journal 3>&1"]
+

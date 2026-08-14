@@ -1,0 +1,73 @@
+#
+# Labtainer Dockerfile
+#
+#  This is the default Labtainer Dockerfile template, please choose the appropriate
+#  base image below.
+#
+ARG registry
+FROM $registry/labtainer.base2
+#FROM $registry/labtainer.network  thêm cho tôi câu lệnh cài netcat vào file docker trên 
+#FROM $registry/labtainer.centos
+#FROM $registry/labtainer.lamp
+#
+ARG lab
+ARG labdir
+ARG imagedir
+ARG user_name
+ARG password
+ARG apt_source
+ARG version
+LABEL version=$version
+ENV APT_SOURCE $apt_source
+RUN /usr/bin/apt-source.sh
+#
+# Install the system files found in the _system directory
+#
+ADD $labdir/$imagedir/sys_tar/sys.tar /
+ADD $labdir/sys_$lab.tar.gz /
+#
+RUN useradd -ms /bin/bash $user_name
+RUN echo "$user_name:$password" | chpasswd
+RUN adduser $user_name sudo
+#
+# Perform all root operations, e.g., "apt-get install" prior to the USER command.
+#
+USER root
+# Install necessary packages including netcat
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends apache2 php php-xml php-mbstring wget curl firefox nmap dirb netcat && \
+    service apache2 restart && \
+    wget https://codeload.github.com/rapid7/metasploit-framework/tar.gz/refs/tags/5.0.100 -O metasploit-framework-5.0.100.tar.gz && \
+    tar -xzvf metasploit-framework-5.0.100.tar.gz && \
+    mv metasploit-framework-5.0.100 /home && \
+    chmod 777  /home/metasploit-framework-5.0.100 && \
+    chown 777 /home/metasploit-framework-5.0.100 && \
+    cd /home/metasploit-framework-5.0.100 && \
+    apt install git curl autoconf bison build-essential libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm6 libgdbm-dev libdb-dev -y && \
+    apt install ruby-full -y && \
+    apt-get install gem -y && \
+    gem install bundler:1.17.3 && \
+    apt-get install zlib1g-dev -y && \
+    apt-get install libpq-dev -y && \
+    apt-get install libpcap-dev -y && \
+    apt-get install libsqlite3-dev -y && \
+    sudo bundler install
+
+USER $user_name
+ENV HOME /home/$user_name
+#
+# Install files in the user home directory
+#
+ADD $labdir/$imagedir/home_tar/home.tar $HOME
+RUN rm -f $HOME/home.tar
+ADD $labdir/$lab.tar.gz $HOME
+#
+# The first thing that executes on the container.
+#
+USER root
+WORKDIR /home/ubuntu
+
+# Start Apache in the foreground
+CMD ["/bin/bash", "-c", "exec /sbin/init --log-target=journal 3>&1"]
+RUN echo 'export PATH=$PATH:/home/metasploit-framework-5.0.100' >> ~/.bashrc && \
+    echo "source ~/.bashrc" >> ~/.bash_profile

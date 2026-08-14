@@ -1,0 +1,13 @@
+/var/log/user_commands.log
+{
+        missingok
+        notifempty
+        size 100M
+        create 0600 root root
+        rotate 4
+        compress
+        delaycompress
+        postrotate
+                /bin/systemctl reload rsyslog > /dev/null 2>/dev/null || true
+        endscript
+}

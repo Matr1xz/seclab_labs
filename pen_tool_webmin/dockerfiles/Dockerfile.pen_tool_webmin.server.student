@@ -1,0 +1,73 @@
+#
+# Labtainer Dockerfile
+#
+#  This is the default Labtainer Dockerfile template, please choose the appropriate
+#  base image below.
+#
+ARG registry
+FROM $registry/labtainer.base2
+#FROM $registry/labtainer.network
+#FROM $registry/labtainer.centos
+#FROM $registry/labtainer.lamp
+#
+ARG lab
+ARG labdir
+ARG imagedir
+ARG user_name
+ARG password
+ARG apt_source
+ARG version
+LABEL version=$version
+ENV APT_SOURCE $apt_source
+RUN /usr/bin/apt-source.sh
+#
+# Install the system files found in the _system directory
+#
+ADD $labdir/$imagedir/sys_tar/sys.tar /
+ADD $labdir/sys_$lab.tar.gz /
+#
+RUN useradd -ms /bin/bash $user_name
+RUN echo "$user_name:$password" | chpasswd
+RUN adduser $user_name sudo
+#
+# Perform all root operations, e.g., "apt-get install" prior to the USER command.
+#
+USER root
+# Install necessary packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends apache2 php php-xml php-mbstring wget curl firefox libnet-ssleay-perl libauthen-pam-perl libio-pty-perl && \
+    chown -R www-data:www-data /var/www/html && \
+    chmod -R 777 /var/www/html && \
+    wget https://cyfuture.dl.sourceforge.net/project/webadmin/webmin/1.900/webmin_1.900_all.deb?viasf=1 -O webmin_1.900_all.deb && \
+    rm /etc/apt/apt.conf.d/docker-gzip-indexes && \
+    apt-get purge apt-show-versions -y && \
+    rm /var/lib/apt/lists/*lz4 && \
+    apt-get -o Acquire::GzipIndexes=false update && \
+    apt-get install apt-show-versions -y && \
+    dpkg -i webmin_1.900_all.deb && \
+    apt-get install -f -y && \
+    /etc/init.d/webmin restart && \
+    echo "root:root" | sudo chpasswd && \
+    /etc/init.d/webmin restart && \
+    sudo sed -i 's/^passwd_mode=0$/passwd_mode=2/' /etc/webmin/miniserv.conf
+
+
+USER $user_name
+ENV HOME /home/$user_name
+#
+# Install files in the user home directory
+#
+ADD $labdir/$imagedir/home_tar/home.tar $HOME
+RUN rm -f $HOME/home.tar
+ADD $labdir/$lab.tar.gz $HOME
+
+ 
+#
+# The first thing that executes on the container.
+#
+USER root
+RUN python3 /home/ubuntu/create_flag.py
+# Start Apache in the foreground
+CMD ["/bin/bash", "-c", "exec /sbin/init --log-target=journal 3>&1"]
+
+

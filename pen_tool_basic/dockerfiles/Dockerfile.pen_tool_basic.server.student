@@ -1,0 +1,47 @@
+#
+# Labtainer Dockerfile
+#
+
+ARG registry
+FROM $registry/labtainer.metasploitable
+
+ARG lab
+ARG labdir
+ARG imagedir
+ARG user_name
+ARG password
+ARG apt_source
+
+ADD $labdir/sys_$lab.tar.gz /
+
+RUN useradd -ms /bin/bash $user_name
+RUN echo "$user_name:$password" | chpasswd
+RUN adduser $user_name sudo
+
+RUN gpasswd -a postgres ssl-cert
+RUN chown -R root:ssl-cert /etc/ssl/private
+RUN chmod -R g+r /etc/ssl/private
+
+USER $user_name
+ENV HOME /home/$user_name
+
+ADD $labdir/$lab.tar.gz $HOME
+
+USER root
+
+# Copy start.sh to the container
+RUN export PATH=$PATH:/usr/sbin
+COPY start.sh /home/ubuntu/start.sh
+RUN chmod +x /home/ubuntu/start.sh
+RUN chown root:root /etc/vsftpd.conf && \
+    sed -i '/^listen=/c\listen=YES' /etc/vsftpd.conf || echo "listen=YES" | sudo tee -a /etc/vsftpd.conf
+RUN echo "root:112233" | sudo chpasswd && \
+    useradd -m -g admin admin && \   
+    echo "ubuntu:abc123" | sudo chpasswd && \
+    sudo sed -i '/\[global\]/a server min protocol = NT1' /etc/samba/smb.conf && \
+    python /home/ubuntu/create_flag.py
+
+# Use a shell script to ensure init.real runs first, then start.sh
+CMD ["/bin/bash", "-c", "exec /sbin/init.real & sleep 2 && /home/ubuntu/start.sh"]
+#CMD ["/sbin/init.real"]
+

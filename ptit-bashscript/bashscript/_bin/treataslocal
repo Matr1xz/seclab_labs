@@ -1,0 +1,5 @@
+./compare.sh
+./duplicate.sh
+./check.sh
+./pgp.sh
+ls

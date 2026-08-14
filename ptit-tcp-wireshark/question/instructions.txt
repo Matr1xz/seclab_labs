@@ -1,0 +1,26 @@
+QUESTION 1
+TCP handshake gồm mấy bước?
+A. 2
+B. 3
+C. 4
+D. 5
+
+QUESTION 2
+Cờ (flag) SYN trong TCP có chức năng gì?
+A. Yêu cầu đóng kết nối
+B. Khởi tạo kết nối
+C. Gửi lại gói bị mất
+D. Đặt lại kết nối
+
+QUESTION 3
+Sequence number trong TCP dùng để:
+A. Xác định thứ tự gói tin trong luồng dữ liệu
+B. Xác định địa chỉ IP nguồn
+C. Lọc gói tin theo cổng
+D. Xác định kích thước cửa sổ TCP
+
+!!!NOTE: 
+	- Hướng dẫn tạo file trên terminal client gõ lệnh:  nano answer.txt
+	- Sinh viên tạo file answer.txt trên máy client để trả lời câu hỏi theo định dạng:  1.A 2.B 3.C
+
+
