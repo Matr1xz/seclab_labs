@@ -1,4 +1,5 @@
 #!/bin/bash
+<<<<<<< HEAD
 : <<'END'
 This software was created by United States Government employees at 
 The Center for Cybersecurity and Cyber Operations (C3O) 
@@ -40,3 +41,16 @@ fi
 #
 #  Add other processing below.
 #
+=======
+# Record the required student-side report artifact before grading.
+homedir="$1"
+destdir="$2"
+here="$homedir/$destdir"
+
+if [ -f "$here/report_zap.html" ] || [ -f "$here/report_zap" ]; then
+    mkdir -p "$here/.local/result"
+    printf 'report_zap=present\n' > "$here/.local/result/report_status.txt"
+fi
+
+exit 0
+>>>>>>> 935e6ccb8c624a081a7bfd33d47ad04fe2097d21

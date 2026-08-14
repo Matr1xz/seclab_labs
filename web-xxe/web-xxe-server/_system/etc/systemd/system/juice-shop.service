@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 [Service]
 Type=simple
 WorkingDirectory=/juice-shop_11.1.2
@@ -7,3 +8,14 @@ ExecStart=/usr/bin/node app.js
 [Install]
 WantedBy=multi-user.target
 Alias=juice-shop
+=======
+[Service]
+Type=simple
+WorkingDirectory=/juice-shop_11.1.2
+Environment=NODE_ENV=temp
+ExecStart=/usr/bin/node app.js
+
+[Install]
+WantedBy=multi-user.target
+Alias=juice-shop
+>>>>>>> 935e6ccb8c624a081a7bfd33d47ad04fe2097d21

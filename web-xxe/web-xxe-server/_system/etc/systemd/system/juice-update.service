@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 [Unit]
 After=juice-shop.service
 [Service]
@@ -8,3 +9,15 @@ ExecStart=/update.sh
 WantedBy=multi-user.target
 Alias=juice-update
 
+=======
+[Unit]
+After=juice-shop.service
+[Service]
+Type=simple
+ExecStart=/update.sh
+
+[Install]
+WantedBy=multi-user.target
+Alias=juice-update
+
+>>>>>>> 935e6ccb8c624a081a7bfd33d47ad04fe2097d21

