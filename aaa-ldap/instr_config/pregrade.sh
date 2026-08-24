@@ -20,7 +20,7 @@ END
 homedir=$1
 # destdir includes the container 
 destdir=$2
-if [[ $destdir == *ldap.ldap.student ]]; then
+if [[ $destdir == *aaa-ldap.aaa-ldap.student ]]; then
    cd $homedir/$destdir
    #
    # extract strings from pcap.  will use number of lines and content
