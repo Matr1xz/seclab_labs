@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# use tshark to analyze pcapng file for unencrypted dns query for wikipedia.org
+tshark -r /home/ubuntu/task2.pcap -T fields -e _ws.col.Info | grep wikipedia.org
+
+# get dns-over-https configs in firefox profile
+firefox_profile_folder=$(ls /home/ubuntu/.mozilla/firefox/ | grep "default-release$")
+cat "/home/ubuntu/.mozilla/firefox/${firefox_profile_folder}/prefs.js" | grep "network.trr" | xargs -d'\n'
+
+# get uncommented DNS configs in /etc/systemd/resolved.conf
+cat /etc/systemd/resolved.conf | awk '!/^ *#/ && NF' | sed 's/ *$//' | xargs -d'\n'
+
+# get nameserver
+cat /etc/resolv.conf | grep "nameserver" | sed 's/ *$//'

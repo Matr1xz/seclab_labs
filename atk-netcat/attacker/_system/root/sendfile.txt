@@ -1,0 +1,1 @@
+My send string: MY_STRING

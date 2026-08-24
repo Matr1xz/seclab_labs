@@ -1,0 +1,66 @@
+#
+# Labtainer Dockerfile
+#
+#  This is the default Labtainer Dockerfile template, please choose the appropriate
+#  base image below.
+#
+ARG registry
+FROM $registry/labtainer.base2
+#FROM $registry/labtainer.network
+#FROM $registry/labtainer.centos
+#FROM $registry/labtainer.lamp
+#
+ARG lab
+ARG labdir
+ARG imagedir
+ARG user_name
+ARG password
+ARG apt_source
+ARG version
+LABEL version=$version
+ENV APT_SOURCE $apt_source
+RUN /usr/bin/apt-source.sh
+#
+# Install the system files found in the _system directory
+#
+ADD $labdir/$imagedir/sys_tar/sys.tar /
+ADD $labdir/sys_$lab.tar.gz /
+#
+RUN useradd -ms /bin/bash $user_name
+RUN echo "$user_name:$password" | chpasswd
+RUN adduser $user_name sudo
+#
+# Perform all root operations, e.g., "apt-get install" prior to the USER command.
+#
+USER root
+# Install necessary packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends apache2 php php-xml php-mbstring wget curl firefox && \
+    wget https://master.dl.sourceforge.net/project/sflog/sflog/sflog_v100.tar.gz?viasf=1  -O sflog.tar.gz && \
+    tar -xvzf sflog.tar.gz && \
+    mv sflog /var/www/html/ && \    
+    chown -R www-data:www-data /var/www/html && \
+    chmod -R 777 /var/www/html && \
+    sed -i 's/short_open_tag = Off/short_open_tag = On/' /etc/php/7.4/apache2/php.ini && \
+    rm /var/www/html/index.html && \
+    mv /var/www/html/sflog/* /var/www/html/ && \
+    rm -rf /var/www/html/sflog
+
+USER $user_name
+ENV HOME /home/$user_name
+#
+# Install files in the user home directory
+#
+ADD $labdir/$imagedir/home_tar/home.tar $HOME
+RUN rm -f $HOME/home.tar
+ADD $labdir/$lab.tar.gz $HOME
+#
+# The first thing that executes on the container.
+#
+USER root
+RUN python3 /home/ubuntu/create_flag.py
+RUN chmod u+s /usr/bin/find
+# Start Apache in the foreground
+CMD ["apachectl", "-D", "FOREGROUND"]
+
+

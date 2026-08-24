@@ -1,0 +1,42 @@
+
+ARG registry
+FROM $registry/labtainer.network
+
+ARG lab
+ARG labdir
+ARG imagedir
+ARG user_name
+ARG password
+ARG apt_source
+ARG version
+LABEL version=$version
+ENV APT_SOURCE $apt_source
+RUN /usr/bin/apt-source.sh
+
+RUN apt-get update && apt-get install -y bind9 dnsutils
+
+ADD $labdir/$imagedir/sys_tar/sys.tar /
+ADD $labdir/sys_$lab.tar.gz /
+#
+RUN useradd -ms /bin/bash $user_name
+RUN echo "$user_name:$password" | chpasswd
+RUN adduser $user_name sudo
+
+RUN systemctl disable dnsmasq
+RUN apt-get purge -y dnsmasq
+
+USER $user_name
+ENV HOME /home/$user_name
+#
+# Install files in the user home directory
+#
+ADD $labdir/$imagedir/home_tar/home.tar $HOME
+# remove after docker fixes problem with empty tars
+RUN rm -f $HOME/home.tar
+ADD $labdir/$lab.tar.gz $HOME
+#
+#  The first thing that executes on the container.
+#
+USER root
+CMD ["/bin/bash", "-c", "exec /sbin/init --log-target=journal 3>&1"]
+

@@ -1,0 +1,42 @@
+#!/bin/bash
+/usr/bin/set_default_gw.sh 172.168.1.10
+sudo sysctl -w net.ipv4.ip_forward=0
+
+echo "nameserver 172.168.1.10" > /etc/resolv.conf
+route del -host 172.17.0.1
+
+dnscat=false
+cname=false
+mx=false
+txt=false
+while true; do
+    if sudo grep -q "DNSCAT2-Tunneling Attempt" /var/log/snort/snort.log; then
+       if grep -q "dnscat" /etc/snort/rules/local.rules; then
+	    dnscat=true
+            sudo sh -c 'echo "DNSCAT tunnel successfully detected" >> /var/log/check.log'
+        fi
+    fi
+    if sudo grep -q "Possible-DNSCat-Tunnel-CNAME-Traffic" /var/log/snort/snort.log; then
+       if grep -q "|00 05 00 01|" /etc/snort/rules/local.rules; then
+	    cname=true
+            sudo sh -c 'echo "DNS CNAME tunnel successfully detected" >> /var/log/check.log'
+        fi
+    fi
+    if sudo grep -q "Possible-DNSCat-Tunnel-MX-Traffic" /var/log/snort/snort.log; then
+       if grep -q "|00 0f 00 01|" /etc/snort/rules/local.rules; then
+	    mx=true
+            sudo sh -c 'echo "DNS MX tunnel successfully detected" >> /var/log/check.log'
+        fi
+    fi
+    if sudo grep -q "Possible-DNSCat-Tunnel-TXT-Traffic" /var/log/snort/snort.log; then
+       if grep -q "|00 10 00 01|" /etc/snort/rules/local.rules; then
+            txt=true
+            sudo sh -c 'echo "DNS TXT tunnel successfully detected" >> /var/log/check.log'
+        fi
+    fi
+    if [ "$dnscat" = true ] && [ "$cname" = true ] && [ "$mx" = true ] && [ "$txt" = true ]; then
+        break
+    fi
+    sleep 5
+done &
+

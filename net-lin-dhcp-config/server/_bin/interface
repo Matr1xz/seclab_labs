@@ -1,0 +1,2 @@
+#!/bin/bash
+cat /etc/default/isc-dhcp-server

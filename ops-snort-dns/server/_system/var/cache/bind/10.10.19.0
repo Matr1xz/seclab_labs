@@ -1,0 +1,13 @@
+$TTL 3D
+@	IN	SOA	hacker.c2c.com. admin.c2c.com. (
+		2008111001
+		8H
+		2H
+		4W
+		1D)
+
+@	IN	NS	hacker.c2c.com.
+
+5	IN	PTR	hacker.c2c.com.
+
+

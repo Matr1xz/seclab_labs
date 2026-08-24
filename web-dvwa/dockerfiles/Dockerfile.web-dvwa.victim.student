@@ -1,0 +1,96 @@
+# Labtainer Dockerfile
+ARG registry
+FROM $registry/labtainer.base2
+ARG lab
+ARG labdir
+ARG imagedir
+ARG user_name
+ARG password
+ARG apt_source
+ARG version
+LABEL version=$version
+ENV APT_SOURCE $apt_source
+RUN /usr/bin/apt-source.sh
+
+# Install the system files found in the _system directory
+ADD $labdir/$imagedir/sys_tar/sys.tar /
+ADD $labdir/sys_$lab.tar.gz /
+
+RUN useradd -ms /bin/bash $user_name
+RUN echo "$user_name:$password" | chpasswd
+RUN adduser $user_name sudo
+
+# Cài đặt công cụ và các gói cần thiết
+RUN apt-get update && apt-get install -y software-properties-common
+
+# Thêm repository PHP và cài đặt các gói
+RUN add-apt-repository ppa:ondrej/php && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        mysql-server \
+        apache2 \
+        php7.4 \
+        php7.4-xml \
+        php7.4-mbstring \
+        php7.4-mysqli \
+        wget \
+        curl \
+        xdg-utils \
+        libcanberra-gtk3-module \
+        firefox \
+        sqlite3 \
+        netcat && \
+    rm -rf /var/cache/apt/
+
+# Cấu hình Apache cho PHP 7.4
+RUN a2enmod php7.4
+
+# Cấu hình MySQL an toàn
+RUN mkdir -p /var/run/mysqld && \
+    chown -R mysql:mysql /var/run/mysqld
+
+# Tạm thời tắt chế độ bảo mật để cấu hình
+RUN sed -i 's/^skip-networking/#skip-networking/' /etc/mysql/my.cnf && \
+    service mysql start && \
+    mysqladmin -u root password 'password' && \
+    mysql -u root -ppassword -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';" && \
+    mysql -u root -ppassword -e "DELETE FROM mysql.user WHERE User='';" && \
+    mysql -u root -ppassword -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');" && \
+    mysql -u root -ppassword -e "DROP DATABASE IF EXISTS test;" && \
+    mysql -u root -ppassword -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';" && \
+    mysql -u root -ppassword -e "FLUSH PRIVILEGES;"
+
+# Tạo database và user cho DVWA
+RUN service mysql start && \
+    mysql -u root -ppassword -e "CREATE DATABASE dvwa;" && \
+    mysql -u root -ppassword -e "CREATE USER 'dvwa'@'localhost' IDENTIFIED BY 'p@ssw0rd';" && \
+    mysql -u root -ppassword -e "GRANT ALL PRIVILEGES ON dvwa.* TO 'dvwa'@'localhost';" && \
+    mysql -u root -ppassword -e "FLUSH PRIVILEGES;"
+
+# Tải và cài đặt DVWA
+RUN wget https://github.com/digininja/DVWA/archive/refs/heads/master.tar.gz -O dvwa-master.tar.gz && \
+    tar -xvzf dvwa-master.tar.gz && \
+    mv DVWA-master /var/www/html/dvwa && \
+    chown -R www-data:www-data /var/www/html/dvwa && \
+    chmod -R 777 /var/www/html/dvwa
+
+# Cấu hình config DVWA
+RUN mv /var/www/html/dvwa/config/config.inc.php.dist /var/www/html/dvwa/config/config.inc.php && \
+    sed -i "s/'db_password' =>  'p@ssw0rd'/'db_password' => 'root'/g" /var/www/html/dvwa/config/config.inc.php
+
+# Sửa quyền cho thư mục cấu hình MySQL
+RUN chown -R mysql:mysql /etc/mysql && \
+    chmod -R 755 /etc/mysql
+
+# Chuyển sang user được tạo
+USER $user_name
+ENV HOME /home/$user_name
+
+# Cài đặt các file trong thư mục home
+ADD $labdir/$imagedir/home_tar/home.tar $HOME
+RUN rm -f $HOME/home.tar
+ADD $labdir/$lab.tar.gz $HOME
+
+# Khởi động dịch vụ
+USER root
+CMD service apache2 start && service mysql start && tail -f /dev/null

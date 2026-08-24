@@ -1,0 +1,17 @@
+./
+./sbin/
+./sbin/faux_init
+./sbin/mynotify.py
+./root/
+./root/filetoview.txt
+./root/catme.txt
+./etc/
+./etc/securetty
+./etc/network/
+./etc/network/interfaces
+./etc/rc.local
+./etc/init.d/
+./etc/init.d/mynotify.sh
+./etc/systemd/
+./etc/systemd/system/
+./etc/systemd/system/mynotify.service

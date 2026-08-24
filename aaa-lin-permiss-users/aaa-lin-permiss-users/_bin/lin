@@ -1,0 +1,9 @@
+#!/bin/bash
+echo "=== File permissions ==="
+ls -la /home/user1/ 2>/dev/null || ls -la /home/ 2>/dev/null
+echo "=== Shared folder ==="
+ls -la /shared/ 2>/dev/null || ls -la /tmp/shared/ 2>/dev/null
+echo "=== /etc/shadow ==="
+cat /etc/shadow 2>/dev/null
+echo "=== faillog ==="
+faillog -a 2>/dev/null

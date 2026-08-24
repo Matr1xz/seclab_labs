@@ -1,0 +1,11 @@
+#!/bin/bash
+echo "=== /etc/shadow ==="
+cat /etc/shadow 2>/dev/null
+echo "=== /etc/group ==="
+cat /etc/group
+echo "=== /home ==="
+ls -la /home/
+echo "=== PAM common-password ==="
+cat /etc/pam.d/common-password 2>/dev/null
+echo "=== Change password for user2 ==="
+printf "Password1!\nPassword1!\n" | passwd user2 2>&1

@@ -1,0 +1,7 @@
+file
+cat
+echo
+strings
+tcpdump
+strace
+ps

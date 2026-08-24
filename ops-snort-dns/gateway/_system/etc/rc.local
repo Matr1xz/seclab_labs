@@ -1,0 +1,26 @@
+#!/bin/bash
+route delete default
+route add default gw 10.10.19.10
+
+# get ethernet device names for the two lans and the wan interfaces
+#
+lan=$(ifconfig | grep -B1 "inet addr:172.168.1.10" | awk '$1!="inet" && $1!="--" {print $1}')
+wan=$(ifconfig | grep -B1 "inet addr:10.10.19.10" | awk '$1!="inet" && $1!="--" {print $1}')
+#
+# flush and delete all chains
+#
+iptables --flush
+iptables -t nat --flush
+iptables -t mangle --flush
+iptables --delete-chain
+iptables -t nat --delete-chain
+iptables -t mangle --delete-chain
+#
+# mirror incoming wan traffic to snort
+#
+iptables -t mangle -A PREROUTING -i $wan -j TEE --gateway 172.168.1.3
+iptables -t mangle -A PREROUTING -i $lan -j TEE --gateway 172.168.1.3
+
+echo "nameserver 10.10.19.10" > /etc/resolv.conf
+route del -host 172.17.0.1
+

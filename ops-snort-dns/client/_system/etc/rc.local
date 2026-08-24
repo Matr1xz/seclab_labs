@@ -1,0 +1,7 @@
+#!/bin/bash
+/usr/bin/set_default_gw.sh 172.168.1.10
+route delete default
+route add default gw 172.168.1.10
+echo "nameserver 172.168.1.10" > /etc/resolv.conf
+route del -host 172.17.0.1
+

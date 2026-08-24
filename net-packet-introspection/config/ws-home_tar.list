@@ -1,0 +1,7 @@
+maxmind/
+maxmind/GeoLiteCity.dat
+maxmind/GeoIP.dat
+maxmind/GeoIPASNum.dat
+maxmind/GeoIPASNumv6.dat
+maxmind/GeoIPv6.dat
+maxmind/GeoLiteCityv6.dat

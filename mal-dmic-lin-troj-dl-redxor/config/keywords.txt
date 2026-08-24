@@ -1,0 +1,6 @@
+cat
+curl
+jq
+git
+ls
+echo

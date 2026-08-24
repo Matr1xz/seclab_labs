@@ -1,0 +1,6 @@
+nmap
+onesixtyone
+/usr/bin/onesixtyone
+curl
+snmpwalk
+/usr/bin/snmpwalk

@@ -1,0 +1,51 @@
+
+ARG registry
+FROM $registry/labtainer.network
+
+ARG lab
+ARG labdir
+ARG imagedir
+ARG user_name
+ARG password
+ARG apt_source
+ARG version
+LABEL version=$version
+ENV APT_SOURCE $apt_source
+RUN /usr/bin/apt-source.sh
+
+# Install dependencies
+RUN apt-get update && apt-get install -y bind9 dnsutils \
+    git \
+    ruby \
+    bundler
+
+ADD $labdir/$imagedir/sys_tar/sys.tar /
+ADD $labdir/sys_$lab.tar.gz /
+
+#Create a non-root user
+RUN useradd -ms /bin/bash $user_name
+RUN echo "$user_name:$password" | chpasswd
+RUN adduser $user_name sudo
+
+RUN systemctl disable dnsmasq
+RUN apt-get purge -y dnsmasq
+
+USER $user_name
+ENV HOME /home/$user_name
+
+#
+# Install files in the user home directory
+# Clone dnscat2 repository and install dependencies for the server
+ADD $labdir/$imagedir/home_tar/home.tar $HOME
+RUN git clone https://github.com/iagox86/dnscat2.git $HOME/dnscat2
+RUN cd $HOME/dnscat2/server && bundle install
+
+# remove after docker fixes problem with empty tars
+RUN rm -f $HOME/home.tar
+ADD $labdir/$lab.tar.gz $HOME
+
+USER root
+CMD ["/bin/bash", "-c", "exec /sbin/init --log-target=journal 3>&1"]
+
+
+

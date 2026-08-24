@@ -1,0 +1,16 @@
+$TTL 3D
+$ORIGIN .
+@       IN      SOA     com. admin. (
+                20293924
+                8H
+                2H
+                4W
+                1D)
+
+@       IN      NS      com.
+@       IN      MX      10 mail.
+
+com     IN      A       10.10.19.5
+mail    IN      A       10.10.19.5
+
+

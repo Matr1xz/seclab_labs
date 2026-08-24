@@ -1,0 +1,11 @@
+#!/bin/bash
+echo "=== /etc/passwd ==="
+cat /etc/passwd
+echo "=== id user1 ==="
+id user1 2>/dev/null
+echo "=== ls /home/user1 ==="
+ls -la /home/user1/ 2>/dev/null
+echo "=== su user1 test ==="
+su user1 -c "echo thanh cong" 2>/dev/null
+echo "=== permission test ==="
+touch /home/user1/testdir/myfile.txt 2>&1 || echo "cannot touch '/home/user1/testdir/myfile.txt': Permission denied"
