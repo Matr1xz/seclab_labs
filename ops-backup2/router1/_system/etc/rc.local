@@ -1,0 +1,7 @@
+#!/bin/bash
+route delete default
+route add -host 172.25.3.3 gw 172.25.2.4
+sysctl -w net.ipv4.conf.all.send_redirects=0
+sysctl -w net.ipv4.conf.default.send_redirects=0
+sysctl -w net.ipv4.conf.eth0.send_redirects=0
+sysctl -w net.ipv4.conf.eth1.send_redirects=0
