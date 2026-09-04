@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 The lab manual is at 
    file://LAB_DOCS/web-xxe.pdf
 The report template at
@@ -7,13 +6,3 @@ The report template at
 You may open those files by right clicking
 and select "Open Link".
 
-=======
-The lab manual is at 
-   file://LAB_DOCS/web-xxe.pdf
-The report template at
-   file://LAB_DOCS/report.txt
-
-You may open those files by right clicking
-and select "Open Link".
-
->>>>>>> 935e6ccb8c624a081a7bfd33d47ad04fe2097d21
