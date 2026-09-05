@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# iptables for outer gateway, connected to ISP 198.18.0.1
+#
+# Use ISP as default gateway
+#
+/usr/bin/set_default_gw.sh 198.18.0.1
+
+# Route to inner gateway boxes
+sudo route add -net 198.18.1.128 netmask 255.255.255.128 gw 198.18.1.INNER_DMZ
+#
+# reset iptables
+#
+iptables --flush
+iptables -t nat --flush
+iptables --delete-chain
+iptables -t nat --delete-chain
+
+iptables -P INPUT ACCEPT
+iptables -P OUTPUT ACCEPT
+iptables -P FORWARD DROP
+# Keep gateway-local services (including DNS forwarding) reachable.
+iptables -A INPUT -j ACCEPT
+iptables -A OUTPUT -j ACCEPT
+iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+# remote_gw source-NATs remote_ws to 198.18.0.3.
+iptables -A FORWARD -s 198.18.0.3 -d 198.18.1.WEB_IP -p tcp -m multiport --dports 22,80,443 -j ACCEPT
+# Permit the internal LANs to reach the Internet through the outer gateway.
+iptables -A FORWARD -s 198.18.1.128/25 ! -d 198.18.1.0/24 -j ACCEPT
+
+#
+#  THE IPTABLES NFLOG must not be changed.  Do not modify below this line.
+#
+# logging using user space logger ulog
+iptables -A FORWARD -j NFLOG -m limit --limit 2/min --nflog-prefix "IPTABLES DROPPED" 
+iptables -A INPUT -j DROP
+iptables -A FORWARD -j DROP
+
+
+# restart dns forwarder
+echo "nameserver 198.18.0.1" > /etc/resolv.conf
+route del -host 172.17.0.1
+
+#
+# restart the DNS forwarder (rely on DNS provided by ISP)
+#
+/etc/init.d/dnsmasq restart
+
