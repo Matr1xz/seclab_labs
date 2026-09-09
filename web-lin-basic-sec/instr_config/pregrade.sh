@@ -4,6 +4,11 @@ destdir=$2
 cd $homedir/$destdir
 
 if [[ "$destdir" == *"client"* ]]; then
-   find . -type f -name "*stdout*" | xargs grep -q "80" 2>/dev/null && echo "firewall_ok" >> client_result.txt
-   find . -type f -name "*stdout*" | xargs grep -q "nosniff" 2>/dev/null && echo "header_ok" >> client_result.txt
+   if grep -rq "80" .local/result/ 2>/dev/null; then
+       echo "firewall_ok" >> client_result.txt
+   fi
+
+   if grep -rq "nosniff" .local/result/ 2>/dev/null; then
+       echo "header_ok" >> client_result.txt
+   fi
 fi
