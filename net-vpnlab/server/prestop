@@ -1,0 +1,5 @@
+#!/bin/bash
+
+if pgrep openvpn > /dev/null 2>&1 || /sbin/ifconfig tun0 > /dev/null 2>&1; then
+    echo "SERVER_OVPN_RUNNING"
+fi
