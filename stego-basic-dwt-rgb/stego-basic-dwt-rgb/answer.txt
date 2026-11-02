@@ -1,0 +1,11 @@
+
+
+PSNR tong the giua anh goc va anh chua tin: __ dB
+
+PSNR kenh B giua anh goc va anh chua tin: __ dB
+
+PSNR khi giau tin vao kenh G: __ dB
+
+PSNR khi giau tin vao kenh R: __dB
+
+Ket luan: Kenh thich hop nhat de giau tin la _

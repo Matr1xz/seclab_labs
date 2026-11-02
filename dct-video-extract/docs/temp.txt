@@ -1,0 +1,9 @@
+ffmpeg -i video.mp4 -vf "select=lte(n\,3)" -vsync vfr frame_%03d.png
+
+python3 extract.py frame_003.png
+
+chmod +x batch_extract.sh
+./batch_extract.sh
+
+cat result.txt
+

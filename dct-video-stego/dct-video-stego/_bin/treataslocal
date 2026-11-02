@@ -1,0 +1,6 @@
+ffmpeg
+python3
+cp
+batch_embed.sh
+extract_frames.sh
+replace_frames.sh

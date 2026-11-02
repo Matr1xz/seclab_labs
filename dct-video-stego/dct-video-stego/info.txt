@@ -1,0 +1,4 @@
+start of infomation
+secret infomation to hide 
+video-stego
+end of infomation

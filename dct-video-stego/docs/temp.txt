@@ -1,0 +1,19 @@
+ffmpeg -i video.mp4 -q:a 0 -map a audio.mp3
+
+mkdir frames
+ffmpeg -i video.mp4 -vf "fps=30" frames/frame_%04d.png
+
+python3 split_info.py info.txt
+
+chmod +x extract_frames.sh
+./extract_frames.sh video.mp4 4
+
+chmod +x batch_embed.sh
+./batch_embed.sh
+
+chmod +x replace_frames.sh
+./replace_frames.sh
+
+ffmpeg -framerate 30 -i frames/frame_%04d.png -i audio.mp3 -c:v libx264 -crf 0 -preset veryslow -c:a aac -shortest output.mp4
+
+
